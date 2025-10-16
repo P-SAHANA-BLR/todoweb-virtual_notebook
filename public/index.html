@@ -3,39 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo Application</title>
+    <title>Todo App - Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>📝 My Todo List - A Virtual Notebook</h1>
-            <p>Create, Read, Update, and Delete your tasks</p>
-        </header>
+        <!-- Login Form -->
+        <div id="loginSection">
+            <div class="auth-box">
+                <h1>📝 Todo App</h1>
+                <div class="auth-form">
+                    <h2>Login</h2>
+                    <form onsubmit="login(event)">
+                        <input type="email" id="loginEmail" placeholder="Email" required>
+                        <input type="password" id="loginPassword" placeholder="Password" required>
+                        <button type="submit">Login</button>
+                    </form>
+                    <p class="auth-switch">Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></p>
+                </div>
 
-        <div class="add-task">
-    <input type="text" id="taskInput" placeholder="Enter a new task..." maxlength="100">
-    <input type="date" id="dueDate" class="due-date-input">
-    <button onclick="addTask()">Add Task</button>
-</div>
-
-        <div class="filters">
-            <button class="filter-btn active" onclick="setFilter('all')">All</button>
-            <button class="filter-btn" onclick="setFilter('active')">Active</button>
-            <button class="filter-btn" onclick="setFilter('completed')">Completed</button>
-        </div>
-
-        <div class="tasks-container">
-            <h2>Your Tasks:</h2>
-            <div id="taskList" class="task-list">
-                <!-- Tasks will appear here dynamically -->
-                <div class="no-tasks">No tasks yet. Add your first task above!</div>
+                <div id="signupForm" class="auth-form" style="display: none;">
+                    <h2>Sign Up</h2>
+                    <form onsubmit="signup(event)">
+                        <input type="email" id="signupEmail" placeholder="Email" required>
+                        <input type="password" id="signupPassword" placeholder="Password" required>
+                        <button type="submit">Sign Up</button>
+                    </form>
+                    <p class="auth-switch">Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+                </div>
             </div>
         </div>
 
-        <div class="stats">
-            <span id="totalTasks">Total: 0 tasks</span>
-            <span id="completedTasks">Completed: 0</span>
+        <!-- Main App (hidden initially) -->
+        <div id="appSection" style="display: none;">
+            <header>
+                <h1>📝 My Todo List</h1>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </header>
+
+            <div class="add-task">
+                <input type="text" id="taskInput" placeholder="Enter a new task..." maxlength="100">
+                <input type="date" id="dueDate" class="due-date-input">
+                <button onclick="addTask()">Add Task</button>
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" onclick="setFilter('all')">All</button>
+                <button class="filter-btn" onclick="setFilter('active')">Active</button>
+                <button class="filter-btn" onclick="setFilter('completed')">Completed</button>
+            </div>
+
+            <div class="tasks-container">
+                <h2>Your Tasks:</h2>
+                <div id="taskList" class="task-list">
+                    <div class="no-tasks">No tasks yet. Add your first task above!</div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <span id="totalTasks">Total: 0 tasks</span>
+                <span id="completedTasks">Completed: 0</span>
+            </div>
         </div>
     </div>
 

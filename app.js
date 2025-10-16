@@ -4,6 +4,18 @@ const path = require('path');
 
 const app = express();
 
+const session = require('express-session');
+
+// Add after other middleware
+app.use(session({
+    secret: 'todo-app-secret',
+    resave: false,
+    saveUninitialized: false
+}));
+
+// Add auth routes
+app.use('/api/auth', require('./routes/auth'));
+
 // Connect to MongoDB (with environment variable for deployment)
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/todoapp')
     .then(() => console.log('Connected to MongoDB successfully!'))

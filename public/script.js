@@ -1,32 +1,140 @@
-// Load tasks when page loads
-document.addEventListener('DOMContentLoaded', function() {
+// Auth functions
+let currentUser = null;
+
+async function checkAuth() {
+    try {
+        const response = await fetch('/api/auth/check');
+        const data = await response.json();
+        
+        if (data.loggedIn) {
+            showApp();
+        } else {
+            showLogin();
+        }
+    } catch (error) {
+        showLogin();
+    }
+}
+
+async function login(event) {
+    event.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    // Clear previous messages
+    clearMessages();
+
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showApp();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Login failed. Please try again.', 'error');
+    }
+}
+
+async function signup(event) {
+    event.preventDefault();
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+
+    // Clear previous messages
+    clearMessages();
+
+    // Basic validation
+    if (password.length < 6) {
+        showMessage('Password must be at least 6 characters long', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage('Account created successfully!', 'success');
+            // Auto login after signup
+            setTimeout(() => showApp(), 1000);
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Signup failed. Please try again.', 'error');
+    }
+}
+
+async function logout() {
+    try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        showLogin();
+        clearForms();
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+}
+
+function showLogin() {
+    document.getElementById('loginSection').style.display = 'block';
+    document.getElementById('appSection').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'none';
+    document.querySelector('.auth-form').style.display = 'block';
+    clearMessages();
+}
+
+function showSignup() {
+    document.getElementById('signupForm').style.display = 'block';
+    document.querySelector('.auth-form').style.display = 'none';
+    clearMessages();
+}
+
+function showApp() {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('appSection').style.display = 'block';
     loadTasks();
-});
-
-// Check if device is touch-enabled
-function isTouchDevice() {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    clearForms();
 }
 
-// Make buttons more touch-friendly on mobile
-if (isTouchDevice()) {
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add larger touch targets
-        const style = document.createElement('style');
-        style.textContent = `
-            .task-actions button {
-                min-height: 44px;
-                min-width: 44px;
-            }
-            .task-item {
-                padding: 15px;
-            }
-        `;
-        document.head.appendChild(style);
-    });
+function clearForms() {
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('signupEmail').value = '';
+    document.getElementById('signupPassword').value = '';
+    clearMessages();
 }
 
-// Add new task with due date support
+function showMessage(message, type) {
+    clearMessages();
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+    messageDiv.textContent = message;
+    
+    const currentForm = document.querySelector('.auth-form[style="display: block;"]') || 
+                        document.getElementById('signupForm');
+    currentForm.insertBefore(messageDiv, currentForm.firstChild);
+}
+
+function clearMessages() {
+    const messages = document.querySelectorAll('.error-message, .success-message');
+    messages.forEach(msg => msg.remove());
+}
+
+// Task functions (updated for auth)
 async function addTask() {
     const taskInput = document.getElementById('taskInput');
     const dueDateInput = document.getElementById('dueDate');
@@ -50,20 +158,23 @@ async function addTask() {
                 taskInput.value = '';
                 dueDateInput.value = '';
                 loadTasks();
+            } else if (response.status === 401) {
+                showMessage('Please login again', 'error');
+                showLogin();
             } else {
-                alert('Failed to add task');
+                showMessage('Failed to add task', 'error');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error adding task');
+            showMessage('Error adding task', 'error');
         }
     } else {
-        alert('Please enter a task');
+        showMessage('Please enter a task', 'error');
     }
 }
 
 // Allow adding task with Enter key
-document.getElementById('taskInput').addEventListener('keypress', function(e) {
+document.getElementById('taskInput')?.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         addTask();
     }
@@ -73,36 +184,32 @@ document.getElementById('taskInput').addEventListener('keypress', function(e) {
 async function loadTasks() {
     try {
         const response = await fetch('/api/tasks');
-        const tasks = await response.json();
+        if (response.status === 401) {
+            showLogin();
+            return;
+        }
         
+        const tasks = await response.json();
         displayTasks(tasks);
         updateStats(tasks);
     } catch (error) {
         console.error('Error loading tasks:', error);
+        if (error.message.includes('Unauthorized')) {
+            showLogin();
+        }
     }
 }
 
-// Display tasks in the UI (Mobile & Desktop friendly)
+// Display tasks in the UI
 function displayTasks(tasks) {
-    let filteredTasks = tasks;
-    
-    // Apply filter
-    if (currentFilter === 'active') {
-        filteredTasks = tasks.filter(task => !task.completed);
-    } else if (currentFilter === 'completed') {
-        filteredTasks = tasks.filter(task => task.completed);
-    }
-    
     const taskList = document.getElementById('taskList');
     
-    if (filteredTasks.length === 0) {
-        const message = currentFilter === 'all' ? 'No tasks yet.' : 
-                       currentFilter === 'active' ? 'No active tasks.' : 'No completed tasks.';
-        taskList.innerHTML = `<div class="no-tasks">${message} Add your first task above!</div>`;
+    if (!tasks || tasks.length === 0) {
+        taskList.innerHTML = '<div class="no-tasks">No tasks yet. Add your first task above!</div>';
         return;
     }
 
-    taskList.innerHTML = filteredTasks.map(task => {
+    taskList.innerHTML = tasks.map(task => {
         // Escape special characters in task title for JavaScript
         const safeTitle = task.title
             .replace(/'/g, "\\'")
@@ -124,7 +231,7 @@ function displayTasks(tasks) {
         }
         
         return `
-        <div class="task-item ${task.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}">
+        <div class="task-item ${task.completed ? 'completed' : ''}">
             <div class="task-content">
                 <span class="task-text" 
                       ondblclick="enableEdit('${task._id}', '${safeTitle}')" 
@@ -203,6 +310,8 @@ async function updateTask(id, newTitle) {
 
             if (response.ok) {
                 loadTasks();
+            } else if (response.status === 401) {
+                showLogin();
             }
         } catch (error) {
             console.error('Error updating task:', error);
@@ -221,6 +330,8 @@ async function toggleTask(id) {
 
         if (response.ok) {
             loadTasks();
+        } else if (response.status === 401) {
+            showLogin();
         }
     } catch (error) {
         console.error('Error toggling task:', error);
@@ -237,6 +348,8 @@ async function deleteTask(id) {
 
             if (response.ok) {
                 loadTasks();
+            } else if (response.status === 401) {
+                showLogin();
             }
         } catch (error) {
             console.error('Error deleting task:', error);
@@ -268,3 +381,11 @@ function setFilter(filter) {
     
     loadTasks();
 }
+
+// Check if device is touch-enabled
+function isTouchDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
+// Check auth when page loads
+document.addEventListener('DOMContentLoaded', checkAuth);

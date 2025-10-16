@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
 
+// Add this check to ALL routes in tasks.js
+if (!req.session.userId) {
+    return res.status(401).json({ message: 'Please login first' });
+}
+
+// And modify task creation to include userId
+const task = new Task({
+    title: req.body.title,
+    dueDate: req.body.dueDate || null,
+    userId: req.session.userId  // Add this line
+});
+
 // GET all tasks
 router.get('/', async (req, res) => {
     try {
