@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Application</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 My Todo List - A Virtual Notebook</h1>
+            <p>Create, Read, Update, and Delete your tasks</p>
+        </header>
+
+        <div class="add-task">
+    <input type="text" id="taskInput" placeholder="Enter a new task..." maxlength="100">
+    <input type="date" id="dueDate" class="due-date-input">
+    <button onclick="addTask()">Add Task</button>
+</div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="setFilter('all')">All</button>
+            <button class="filter-btn" onclick="setFilter('active')">Active</button>
+            <button class="filter-btn" onclick="setFilter('completed')">Completed</button>
+        </div>
+
+        <div class="tasks-container">
+            <h2>Your Tasks:</h2>
+            <div id="taskList" class="task-list">
+                <!-- Tasks will appear here dynamically -->
+                <div class="no-tasks">No tasks yet. Add your first task above!</div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <span id="totalTasks">Total: 0 tasks</span>
+            <span id="completedTasks">Completed: 0</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
